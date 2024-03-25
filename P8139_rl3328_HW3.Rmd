@@ -1,0 +1,80 @@
+---
+title: "example"
+author: "Ruixi Li"
+date: "2024-03-11"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+
+```
+
+# Data Preparation and Conduct PCA analysis
+
+Since intuitively, id can not provide information/variance for student's performance, I excluded it in the PCA analysis.
+
+```{r data_pre_pca}
+mydata = read.table(file="PCA_data.csv", header=TRUE, row.names=1, sep=",")
+
+mydata.pca = prcomp(mydata, retx=TRUE, center=TRUE, scale=TRUE)
+# variable means set to zero, and variances set to one "scale=TRUE"
+# PCA scores for each sample store in mydata.pca$x
+# loadings stored in mydata.pca$rotation
+# square roots of eigenvalues score in mydata.pca$sdev (note that eigenvalues are variances of principal compoments)
+# variable means stored in mydata.pca$center
+# variable standard deviations stored in mydata.pca$scale
+sd = mydata.pca$sdev
+loadings = mydata.pca$rotation
+rownames(loadings) = colnames(mydata)
+
+```
+
+# Q1a.
+
+```{r pca_score}
+#output PCA scores from prcmp package
+scores = mydata.pca$x
+scores
+
+#PCA scores from loadings and the original data
+mydata_scaled = scale(mydata)
+scores_manual <- as.matrix(mydata_scaled) %*% loadings
+scores_manual
+# This calculation uses matrix multiplication (%*%) to project the standardized data onto the PCA loadings.
+```
+
+# Q1b.
+
+Since eigenvalues are variances of principal compoments, we can calculate the percent variance explained of each component by diving the eigenvalue of each component by the sum of all eigenvalues. Given that mydata.ppca$sdev is square roots of eigenvalues store...
+
+```{r variance_explained}
+eigenvalues <- mydata.pca$sdev^2
+total_variance <- sum(eigenvalues)
+percent_variance_explained <- (eigenvalues / total_variance) * 100
+percent_variance_explained
+```
+
+* The percent variance explained of PC1 is `r percent_variance_explained[1]`%，the percent variance explained of PC2 is `r percent_variance_explained[2]`%, the percent variance explained of PC3 is `r percent_variance_explained[3]`%.
+
+# Q1c.
+
+```{r PC_vs_PC_plot}
+plot(scores[,1:2],
+xlim=c(min(scores[,1:2]),max(scores[,1:2])),ylim=c(min(scores[,1:2]),max(scores[,1:2])))
+text(scores[,1], scores[,2], rownames(scores), col="blue", cex=0.7, pos=3)
+title("Plot of PC1 vs. PC2")
+
+
+plot(scores[,-2],
+xlim=c(min(scores[,-2]),max(scores[,-2])),ylim=c(min(scores[,-2]),max(scores[,-2])))
+text(scores[,1], scores[,3], rownames(scores), col="blue", cex=0.7, pos=3)
+title("Plot of PC1 vs. PC3")
+
+plot(scores[,-1],
+xlim=c(min(scores[,-1]),max(scores[,-1])),ylim=c(min(scores[,-1]),max(scores[,-1])))
+text(scores[,2], scores[,3], rownames(scores), col="blue", cex=0.7, pos=3)
+title("Plot of PC2 vs. PC3")
+
+```
+
